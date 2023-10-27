@@ -41,7 +41,7 @@ For each of the folders (DP_DICE_Bino, DP_DICE or MPC_FM), after compilation, we
 The complete process of the DP-DICE-Bino (or DP-DICE / MPC-FM) protocol includes the offline preparation phase and the online phase. 
 
 ### Offline preparation
-In the offline preparation phase, generating the secret random numbers(**Triple, Rand, Rand2, and RandExp**) used in the online step is necessary. The following is the description of the parameters for random number generation. After compiling DP-DICE-Bino (or DP-DICE / MPC-FM), we can get the executable file `pairwise-offline.x` and use it to generate random numbers. `pairwise-offline.x` can be executed with the following parameters:
+In the offline preparation phase, generating the secret random numbers (**Triple, Rand, Rand2, and RandExp**) used in the online step is necessary. The following is the description of the parameters for random number generation. After compiling DP-DICE-Bino (or DP-DICE / MPC-FM), we can get the executable file `pairwise-offline.x` and use it to generate random numbers. `pairwise-offline.x` can be executed with the following parameters:
 
 ```shell
 ./pairwise-offline.x  -o {Write generated results to files} -h {host of CP0 (default: localhost)} -x  {number of threads }  -f {the modulus used for the SPDZ framework} -N {number of CPs} -p {Current CP sequence number(From 0 to N-1)} -n  {number of Triples to be generated} -nr {number of  Rands to be generated} -nr2  {number of Rand2s to be generated} -nrx{number of  RandExp s to be generated} -E {the bit length of the input plaintext for SPDZ}
@@ -136,7 +136,7 @@ Run the DH in the Server terminal
 
 ### To compile FMS sketch
 
-Run the following commands in cmd.
+Run the following commands in terminal: 
 
 ```cpp
 cd FMS
@@ -174,18 +174,29 @@ The cardinality size of two sets is both  $10^5$ and the intersection cardinalit
 ./FMS 100'000 100'000 5000
 ```
 
-### File introduction
+### To compile other sketch (LL sketch, FM sketch)
+
+Our project also provides the implementation of FM sketch and LL sketch, if you want to get the error of the other two sketches as a comparison, you can run the following commands in terminal:
+
+```cpp
+// Output the error of three types of sketch
+./FMS ll fm
+// you can change the cardinality size while getting the error of three types of sketch 
+./FMS ll fm c 100'000 100'000 5000
+./FMS c 100'000 100'000 5000 ll fm
+```
+
+### File structure
 
 - build：Create a build directory to store the compilation products, which can avoid mixing the compilation products with the code files, generate a makefile file in the build directory, and then call the compiler to actually compile and link the project. (If you build in a different way, you can delete the folder.) 
 
 - noise：Noise generation file. in addition to the generation of Laplace noise, includes various other types funtions to generate noise such as the Gaussian mechanism, the Distributed Discrete Gaussian mechanism, and the MPCDP-CP.
-
 - MurmurHash3：MurmurHash3 library functions.
-
-- FmsSketch: Our FMS sketch method, including multi-threaded processing part of the code.
+- FMsketch: Implementation of FM sketch(Flajolet-Martin sketch).
+- LLsketch: Implementation of LogLog sketch.
+- FMSsketch: Our FMS sketch method, including multi-threaded processing part of the code.
 - batch_est:  Batch processing functions for cardinality estimation.
-
-- core.cpp: This file is the entrance to the project, including the main function.
+- core.cpp: The entrance of the project.
 
 
 

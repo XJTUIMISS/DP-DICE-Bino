@@ -3,9 +3,10 @@
 using namespace std;
 using namespace chrono;
 
-double batch_fm_est(unsigned long long n1, unsigned long long n2, unsigned long long n4, unsigned repeat_times, unsigned m)
+double batch_fm_est(unsigned long long n1, unsigned long long n2, unsigned long long n4, unsigned repeat_times, unsigned m, double union_inter[])
 {
     unsigned seed = clock(), M = m, w = 32, number_of_threads = 24;
+    unsigned long long n3 = n1 + n2 - n4;
     unsigned seeds[M];
     srand(seed);
     for (int j = 0; j < M; j++)
@@ -18,6 +19,8 @@ double batch_fm_est(unsigned long long n1, unsigned long long n2, unsigned long 
     FmSketch b = FmSketch(M, w, seeds, number_of_threads);
     vector<double> errors;
     double error;
+    vector<double> errors_union;
+    double error_union;
     for (int i = 0; i < repeat_times; ++i)
     {
         seed = rand() * i;
@@ -35,13 +38,23 @@ double batch_fm_est(unsigned long long n1, unsigned long long n2, unsigned long 
         double estimation = a.estimate() + b.estimate() - c.estimate();
         error = pow(((estimation - (double)n4) / (double)n4), 2.0);
         errors.push_back(error);
+        error_union = pow(((c.estimate() - (double)n3) / (double)n3), 2.0);
+        errors_union.push_back(error_union);
     }
+    error_union = 0.0;
+    for (int i = 0; i < errors_union.size(); ++i)
+    {
+        error_union += errors_union[i];
+    }
+    error_union = pow(error_union / (double)errors_union.size(), 0.5);
+    union_inter[0] = error_union;
     error = 0.0;
     for (int i = 0; i < errors.size(); ++i)
     {
         error += errors[i];
     }
     error = pow(error / (double)errors.size(), 0.5);
+    union_inter[1] = error;
     a.clear_sketch();
     b.clear_sketch();
     return error;
@@ -117,14 +130,18 @@ double batch_noisy_fm_est(unsigned long long n1, unsigned long long n2, unsigned
     b.clear_sketch();
     return error;
 }
-double batch_ll_est(unsigned long long n1, unsigned long long n2, unsigned long long n4, unsigned repeat_times, unsigned m)
+
+double batch_ll_est(unsigned long long n1, unsigned long long n2, unsigned long long n4, unsigned repeat_times, unsigned m, double union_inter[])
 {
     unsigned seed = clock(), M = m, w = 32, number_of_threads = 24;
+    unsigned long long n3 = n1 + n2 - n4;
     srand(seed);
     seed = rand();
     LLSketch a = LLSketch(M, w, seed, number_of_threads);
     LLSketch b = LLSketch(M, w, seed, number_of_threads);
     vector<double> errors;
+    vector<double> errors_union;
+    double error_union;
     double error;
     for (int i = 0; i < repeat_times; ++i)
     {
@@ -158,13 +175,23 @@ double batch_ll_est(unsigned long long n1, unsigned long long n2, unsigned long 
         double estimation = a_est + b_est - c_est;
         error = pow(((estimation - (double)n4) / (double)n4), 2.0);
         errors.push_back(error);
+        error_union = pow(((c_est - (double)n3) / (double)n3), 2.0);
+        errors_union.push_back(error_union);
     }
+    error_union = 0.0;
+    for (int i = 0; i < errors_union.size(); ++i)
+    {
+        error_union += errors_union[i];
+    }
+    error_union = pow(error_union / (double)errors_union.size(), 0.5);
+    union_inter[0] = error_union;
     error = 0.0;
     for (int i = 0; i < errors.size(); ++i)
     {
         error += errors[i];
     }
     error = pow(error / (double)errors.size(), 0.5);
+    union_inter[1] = error;
     a.clear_sketch();
     b.clear_sketch();
     return error;
@@ -245,12 +272,14 @@ double batch_noisy_ll_est(unsigned long long n1, unsigned long long n2, unsigned
     b.clear_sketch();
     return error;
 }
-double batch_fms_intersection(unsigned long long n1, unsigned long long n2, unsigned long long n4, unsigned repeat_times, unsigned m) //  n1: car of set S1;  n2: car of set S2;  n3: car of set S1 union S2;  n4: car of set S1 inter S2
+double batch_fms_est(unsigned long long n1, unsigned long long n2, unsigned long long n4, unsigned repeat_times, unsigned m, double union_inter[]) //  n1: car of set S1;  n2: car of set S2;  n3: car of set S1 union S2;  n4: car of set S1 inter S2
 {
     unsigned i = 0;
     unsigned seed = clock(), M = 4096, w = 32, number_of_threads = 24;
     vector<double> errors, errors3;
-    double error, estimation;
+    vector<double> errors_union;
+    unsigned long long n3 = n1 + n2 - n4;
+    double error, estimation, error_union;
     FMS a = FMS(M, w, seed, number_of_threads);
     FMS b = FMS(M, w, seed, number_of_threads);
     srand(seed);
@@ -266,6 +295,8 @@ double batch_fms_intersection(unsigned long long n1, unsigned long long n2, unsi
         FMS c(a, b);
         double c_est = c.estimate();
         estimation = a.estimate() + b.estimate() - c_est;
+        error_union = pow(((c_est - (double)n3) / (double)n3), 2.0);
+        errors_union.push_back(error_union);
         error = pow(((estimation - (double)n4) / (double)n4), 2.0);
         errors3.push_back(error);
     }
@@ -275,6 +306,14 @@ double batch_fms_intersection(unsigned long long n1, unsigned long long n2, unsi
         error += errors3[i];
     }
     error = pow(error / (double)errors3.size(), 0.5);
+    union_inter[1] = error;
+    error_union = 0.0;
+    for (i = 0; i < errors_union.size(); ++i)
+    {
+        error_union += errors_union[i];
+    }
+    error_union = pow(error_union / (double)errors_union.size(), 0.5);
+    union_inter[0] = error_union;
     a.clear_sketch();
     b.clear_sketch();
 
@@ -282,7 +321,7 @@ double batch_fms_intersection(unsigned long long n1, unsigned long long n2, unsi
 }
 //  n1: car of set S1;  n2: car of set S2;  n3: car of set S1 union S2;  n4: car of set S1 inter S2
 // noisy_type: gaussian_noise(1) CDP(2) Binomial mechanism(3)
-double batch_noisy_fms_intersection(unsigned long long n1, unsigned long long n2, unsigned long long n4, unsigned repeat_times, unsigned m, double res[], int noisy_type, double epsilon)
+double batch_noisy_fms_est(unsigned long long n1, unsigned long long n2, unsigned long long n4, unsigned repeat_times, unsigned m, double res[], int noisy_type, double epsilon)
 {
     unsigned i = 0;
     unsigned seed = clock(), M = m, w = 32, number_of_threads = 24;
@@ -308,7 +347,8 @@ double batch_noisy_fms_intersection(unsigned long long n1, unsigned long long n2
         noises = generate_binomial_noise(3 * repeat_times, epsilon, 1);
     }
     double noisy_error = 0;
-    for (int i = 0; i < 3 * repeat_times;i++){
+    for (int i = 0; i < 3 * repeat_times; i++)
+    {
         noisy_error += noises[i] * noises[i];
     }
     noisy_error = pow(noisy_error / (3 * repeat_times), 0.5);
@@ -334,7 +374,7 @@ double batch_noisy_fms_intersection(unsigned long long n1, unsigned long long n2
         estimation = n1 + n2 - c_estimation;
         error = pow(((estimation - (double)n4) / (double)n4), 2.0);
         errors.push_back(error);
-        }
+    }
     error = 0.0;
     for (i = 0; i < errors3.size(); ++i)
     {

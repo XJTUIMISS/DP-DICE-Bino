@@ -61,8 +61,6 @@ double cdp_sigma_gen(double epsilon, double sensibility)
             cdp_sigma += 0.0001;
         }
     }
-    cout << "finish" << endl;
-
     if (cdp_sigma <= 0.5)
     {
         cout << "cdp_sigma error" << endl;

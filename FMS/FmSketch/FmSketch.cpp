@@ -1,4 +1,4 @@
-#include "FmSketch.h"
+#include "FMsketch.h"
 
 FmSketch::FmSketch(unsigned t_M, unsigned t_w, unsigned t_seeds[], unsigned t_number_of_threads)
 {
